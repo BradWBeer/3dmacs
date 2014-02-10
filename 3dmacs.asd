@@ -10,5 +10,8 @@
                #:clinch-pango
                #:clinch-freeimage)
   :components ((:file "package")
-               (:file "3dmacs")))
+               (:file "3dmacs")
+	       (:file "element")
+	       (:file "window")
+	       (:file "frame")))
 
