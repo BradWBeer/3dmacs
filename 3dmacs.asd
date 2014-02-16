@@ -15,5 +15,6 @@
 	       (:file "defaults")
 	       (:file "element")
 	       (:file "window")
-	       (:file "frame")))
+	       (:file "frame")
+	       (:file "3dnode")))
 
