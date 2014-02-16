@@ -1,9 +1,11 @@
 
 (in-package :3Dmacs)
 
+(defvar internal-value (gensym "3Dmacs"))
+
 (defclass element ()
   ((parent   :reader   parent
-	     :initform nil
+	     :initform  nil
 	     :initarg  :parent)
 
    (children :reader   children
@@ -16,35 +18,59 @@
 
    (name     :reader   name
 	     :initform nil
-	     :initarg  :name)))
+	     :initarg  :name)
+   (attribute :initform nil)))
 
-(defun element (&rest args)
+(defmethod initialize-instance :after ((this element) &key attributes)
   
-  (let* ((name nil)
-	 (id   nil)
-	 (parent nil)
-	 (children (labels ((rec (lst)
-				 (print lst)
-				 (cond ((null lst) nil)
-				       ((eql :name   (first lst)) (setf name   (second lst)) (rec (cddr lst)))
-				       ((eql :id     (first lst)) (setf id     (second lst)) (rec (cddr lst)))
-				       ((eql :parent (first lst)) (setf parent (second lst)) (rec (cddr lst)))
-				       (t (cons (first lst) (rec (rest lst)))))))
-		     (rec args))))
+  (with-slots ((children children)) this
+    (loop for c in children do (setf (slot-value c 'parent) this)))
+  
+  (when attributes (map nil
+			  (lambda (x) (setf (attribute this (first x)) (second x)))
+			  attributes)))
 
-    (print children)
-    (make-instance 'element
-		   :id id
-		   :name name
-		   :parent parent
-		   :children children)))
+  
+
+(defmacro element (&rest args)
+  
+  (multiple-value-bind (keys children) (3dmacs::split-keywords args)
+    
+    `(make-instance 'element ,@keys :children (list ,@children))))
+    
+
+(defmethod attribute ((this element) key)
+  
+  (with-slots ((attr attribute)
+	       (parent parent)) this
+
+    (if attr
+	(multiple-value-bind (val found?) (gethash key attr)
+	  
+	  (if found?
+	      (values val this)
+	      (when parent (attribute parent key))))
+	(when parent (attribute parent key)))))
 
 
+
+(defmethod (setf attribute) (new-val (this element) key)
+
+  (with-slots ((attr attribute)) this
+
+    (unless attr (setf attr (make-hash-table)))
+    (setf (gethash key attr) new-val)))
+    
+			       
 
 (defmethod (setf children) (children (this element))
-  (CC (setf children) :unimplemented)
   
-  (setf (slot-value this 'children) children))
+    (setf (slot-value this 'children) children)
+
+    (loop for e in children
+       do (setf (parent e) this)))
+
+
 
 (defmethod print-object ((this element) s)
 
@@ -54,11 +80,26 @@
   (when (children this) (format s "~{~%~S~}" (children this)))
   (format s ")"))
 
+
+
+(defmethod update ((this element) &key)
+  
+  (loop for c in (children this)
+       do (update c)))
+
+
+(defmethod render ((this element) &key)
+  (print "element:render")
+  (loop for c in (children this)
+       do (render c)))
+
+(defmethod destroy ((this element) &key) )
+
 (defmethod element-back ((this element))
-  )
+  (car (last (children this))))
 
 (defmethod element-front ((this element))
-  )
+  (car (children this)))
 
 (defmethod element-push-back ((this element) (child element))
   )

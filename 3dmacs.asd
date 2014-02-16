@@ -8,9 +8,11 @@
   :depends-on (#:clinch
                #:clinch-cairo
                #:clinch-pango
-               #:clinch-freeimage)
+               #:clinch-freeimage
+	       #:lispbuilder-sdl)
   :components ((:file "package")
                (:file "3dmacs")
+	       (:file "defaults")
 	       (:file "element")
 	       (:file "window")
 	       (:file "frame")))
